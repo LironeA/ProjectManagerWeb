@@ -21,9 +21,8 @@ namespace ProjectManagerWeb.Controllers
         // GET: Todoes
         public async Task<IActionResult> Index()
         {
-              return _context.Todo != null ? 
-                          View(await _context.Todo.ToListAsync()) :
-                          Problem("Entity set 'MyProjectManagerDBContext.Todo'  is null.");
+            var myProjectManagerDBContext = _context.Todo.Include(t => t.Project);
+            return View(await myProjectManagerDBContext.ToListAsync());
         }
 
         // GET: Todoes/Details/5
@@ -35,6 +34,7 @@ namespace ProjectManagerWeb.Controllers
             }
 
             var todo = await _context.Todo
+                .Include(t => t.Project)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (todo == null)
             {
@@ -47,6 +47,7 @@ namespace ProjectManagerWeb.Controllers
         // GET: Todoes/Create
         public IActionResult Create()
         {
+            ViewData["ProjectId"] = new SelectList(_context.Projects, "Id", "Name");
             return View();
         }
 
@@ -55,7 +56,7 @@ namespace ProjectManagerWeb.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,TodoListId,Name,Description,IsComplete")] Todo todo)
+        public async Task<IActionResult> Create([Bind("Id,ProjectId,Name,Description,IsComplete,Order")] Todo todo)
         {
             if (ModelState.IsValid)
             {
@@ -63,6 +64,7 @@ namespace ProjectManagerWeb.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["ProjectId"] = new SelectList(_context.Projects, "Id", "Name", todo.ProjectId);
             return View(todo);
         }
 
@@ -79,6 +81,7 @@ namespace ProjectManagerWeb.Controllers
             {
                 return NotFound();
             }
+            ViewData["ProjectId"] = new SelectList(_context.Projects, "Id", "Name", todo.ProjectId);
             return View(todo);
         }
 
@@ -87,7 +90,7 @@ namespace ProjectManagerWeb.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,TodoListId,Name,Description,IsComplete")] Todo todo)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,ProjectId,Name,Description,IsComplete,Order")] Todo todo)
         {
             if (id != todo.Id)
             {
@@ -114,6 +117,7 @@ namespace ProjectManagerWeb.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["ProjectId"] = new SelectList(_context.Projects, "Id", "Name", todo.ProjectId);
             return View(todo);
         }
 
@@ -126,6 +130,7 @@ namespace ProjectManagerWeb.Controllers
             }
 
             var todo = await _context.Todo
+                .Include(t => t.Project)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (todo == null)
             {

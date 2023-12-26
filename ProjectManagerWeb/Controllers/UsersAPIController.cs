@@ -24,10 +24,10 @@ namespace ProjectManagerWeb.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUser()
         {
-          if (_context.User == null)
-          {
-              return NotFound();
-          }
+            if (_context.User == null)
+            {
+                return NotFound();
+            }
             return await _context.User.ToListAsync();
         }
 
@@ -35,10 +35,10 @@ namespace ProjectManagerWeb.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-          if (_context.User == null)
-          {
-              return NotFound();
-          }
+            if (_context.User == null)
+            {
+                return NotFound();
+            }
             var user = await _context.User.FindAsync(id);
 
             if (user == null)
@@ -77,7 +77,7 @@ namespace ProjectManagerWeb.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/UsersAPI
@@ -85,14 +85,20 @@ namespace ProjectManagerWeb.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-          if (_context.User == null)
-          {
-              return Problem("Entity set 'MyProjectManagerDBContext.User'  is null.");
-          }
+            if (_context.User == null)
+            {
+                return Problem("Entity set 'MyProjectManagerDBContext.User'  is null.");
+            }
+
+            if(String.IsNullOrEmpty(user.Name))
+            {
+                return BadRequest("Name is required.");
+            }
+           
             _context.User.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            return Ok();
         }
 
         // DELETE: api/UsersAPI/5
@@ -112,7 +118,7 @@ namespace ProjectManagerWeb.Controllers
             _context.User.Remove(user);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok();
         }
 
         private bool UserExists(int id)

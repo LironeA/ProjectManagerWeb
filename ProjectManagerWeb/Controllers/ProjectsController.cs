@@ -21,9 +21,8 @@ namespace ProjectManagerWeb.Controllers
         // GET: Projects
         public async Task<IActionResult> Index()
         {
-              return _context.Projects != null ? 
-                          View(await _context.Projects.ToListAsync()) :
-                          Problem("Entity set 'MyProjectManagerDBContext.Projects'  is null.");
+            var myProjectManagerDBContext = _context.Projects.Include(p => p.User);
+            return View(await myProjectManagerDBContext.ToListAsync());
         }
 
         // GET: Projects/Details/5
@@ -35,6 +34,7 @@ namespace ProjectManagerWeb.Controllers
             }
 
             var project = await _context.Projects
+                .Include(p => p.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (project == null)
             {
@@ -47,6 +47,7 @@ namespace ProjectManagerWeb.Controllers
         // GET: Projects/Create
         public IActionResult Create()
         {
+            ViewData["UserName"] = new SelectList(_context.User, "Id", "Name");
             return View();
         }
 
@@ -55,7 +56,7 @@ namespace ProjectManagerWeb.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Description")] Project project)
+        public async Task<IActionResult> Create([Bind("Id,Name,Description,UserId")] Project project)
         {
             if (ModelState.IsValid)
             {
@@ -63,6 +64,7 @@ namespace ProjectManagerWeb.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["UserName"] = new SelectList(_context.User, "Id", "Name", project.UserId);
             return View(project);
         }
 
@@ -79,6 +81,7 @@ namespace ProjectManagerWeb.Controllers
             {
                 return NotFound();
             }
+            ViewData["UserName"] = new SelectList(_context.User, "Id", "Name", project.UserId);
             return View(project);
         }
 
@@ -87,7 +90,7 @@ namespace ProjectManagerWeb.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description")] Project project)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,UserId")] Project project)
         {
             if (id != project.Id)
             {
@@ -114,6 +117,7 @@ namespace ProjectManagerWeb.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
+            ViewData["UserName"] = new SelectList(_context.User, "Id", "Name", project.UserId);
             return View(project);
         }
 
@@ -126,6 +130,7 @@ namespace ProjectManagerWeb.Controllers
             }
 
             var project = await _context.Projects
+                .Include(p => p.User)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (project == null)
             {

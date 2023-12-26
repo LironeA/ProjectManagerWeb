@@ -24,10 +24,10 @@ namespace ProjectManagerWeb.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
         {
-          if (_context.Projects == null)
-          {
-              return NotFound();
-          }
+            if (_context.Projects == null)
+            {
+                return NotFound();
+            }
             return await _context.Projects.ToListAsync();
         }
 
@@ -35,10 +35,10 @@ namespace ProjectManagerWeb.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Project>> GetProject(int id)
         {
-          if (_context.Projects == null)
-          {
-              return NotFound();
-          }
+            if (_context.Projects == null)
+            {
+                return NotFound();
+            }
             var project = await _context.Projects.FindAsync(id);
 
             if (project == null)
@@ -77,7 +77,7 @@ namespace ProjectManagerWeb.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/ProjectsAPI
@@ -85,14 +85,24 @@ namespace ProjectManagerWeb.Controllers
         [HttpPost]
         public async Task<ActionResult<Project>> PostProject(Project project)
         {
-          if (_context.Projects == null)
-          {
-              return Problem("Entity set 'MyProjectManagerDBContext.Projects'  is null.");
-          }
+            if (_context.Projects == null)
+            {
+                return Problem("Entity set 'MyProjectManagerDBContext.Projects'  is null.");
+            }
+            if (project == null || project.Id != 0)
+            {
+                return BadRequest();
+            }
+
+            if (String.IsNullOrEmpty(project.Name))
+            {
+                return BadRequest("Project name is required.");
+            }
+
             _context.Projects.Add(project);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetProject", new { id = project.Id }, project);
+            return Ok();
         }
 
         // DELETE: api/ProjectsAPI/5
@@ -112,7 +122,7 @@ namespace ProjectManagerWeb.Controllers
             _context.Projects.Remove(project);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok();
         }
 
         private bool ProjectExists(int id)

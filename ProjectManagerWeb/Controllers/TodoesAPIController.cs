@@ -24,10 +24,10 @@ namespace ProjectManagerWeb.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Todo>>> GetTodo()
         {
-          if (_context.Todo == null)
-          {
-              return NotFound();
-          }
+            if (_context.Todo == null)
+            {
+                return NotFound();
+            }
             return await _context.Todo.ToListAsync();
         }
 
@@ -35,10 +35,10 @@ namespace ProjectManagerWeb.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Todo>> GetTodo(int id)
         {
-          if (_context.Todo == null)
-          {
-              return NotFound();
-          }
+            if (_context.Todo == null)
+            {
+                return NotFound();
+            }
             var todo = await _context.Todo.FindAsync(id);
 
             if (todo == null)
@@ -57,6 +57,10 @@ namespace ProjectManagerWeb.Controllers
             if (id != todo.Id)
             {
                 return BadRequest();
+            }
+            if (!_context.Projects.Any(x => x.Id == todo.ProjectId))
+            {
+                return NotFound();
             }
 
             _context.Entry(todo).State = EntityState.Modified;
@@ -77,7 +81,7 @@ namespace ProjectManagerWeb.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok();
         }
 
         // POST: api/TodoesAPI
@@ -85,14 +89,26 @@ namespace ProjectManagerWeb.Controllers
         [HttpPost]
         public async Task<ActionResult<Todo>> PostTodo(Todo todo)
         {
-          if (_context.Todo == null)
-          {
-              return Problem("Entity set 'MyProjectManagerDBContext.Todo'  is null.");
-          }
+            if (_context.Todo == null)
+            {
+                return Problem("Entity set 'MyProjectManagerDBContext.Todo'  is null.");
+            }
+            if (!_context.Projects.Any(x => x.Id == todo.ProjectId))
+            {
+                return NotFound();
+            }
+            if(todo.Id != 0)
+            {
+                return BadRequest();
+            }
+            if(String.IsNullOrEmpty(todo.Name))
+            {
+                return BadRequest("Name is required.");
+            }
             _context.Todo.Add(todo);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetTodo", new { id = todo.Id }, todo);
+            return Ok();
         }
 
         // DELETE: api/TodoesAPI/5
@@ -112,7 +128,7 @@ namespace ProjectManagerWeb.Controllers
             _context.Todo.Remove(todo);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok();
         }
 
         private bool TodoExists(int id)

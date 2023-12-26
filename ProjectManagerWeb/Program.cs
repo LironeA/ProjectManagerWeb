@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<MyProjectManagerDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DBConnection"))
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DBConnectionLocal"))
     );
 
 builder.Services.AddCors(options =>
