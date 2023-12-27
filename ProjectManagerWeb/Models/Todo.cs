@@ -11,7 +11,7 @@ namespace ProjectManagerWeb.Models
         public int ProjectId { get; set; }
 
         [ForeignKey("ProjectId")]
-        public Project? Project { get; set; }
+        public virtual Project? Project { get; set; }
         [Required]
         public string Name { get; set; }
         public string Description { get; set; }

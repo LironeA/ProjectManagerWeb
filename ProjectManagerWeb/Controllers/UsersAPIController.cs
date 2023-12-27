@@ -28,6 +28,7 @@ namespace ProjectManagerWeb.Controllers
             {
                 return NotFound();
             }
+            _context.Projects.Load();
             return await _context.User.ToListAsync();
         }
 
