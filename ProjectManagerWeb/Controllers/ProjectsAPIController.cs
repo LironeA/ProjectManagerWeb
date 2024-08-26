@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjectManagerWeb.Models;
+using ProjectManagerWeb.Services;
 
 namespace ProjectManagerWeb.Controllers
 {
@@ -13,121 +14,75 @@ namespace ProjectManagerWeb.Controllers
     [ApiController]
     public class ProjectsAPIController : ControllerBase
     {
-        private readonly MyProjectManagerDBContext _context;
+        private readonly IProjectService _projectService;
 
-        public ProjectsAPIController(MyProjectManagerDBContext context)
+        public ProjectsAPIController(IProjectService projectService)
         {
-            _context = context;
+            _projectService = projectService;
         }
 
         // GET: api/ProjectsAPI
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Project>>> GetProjects()
         {
-            if (_context.Projects == null)
+            var projects = await _projectService.GetProjectsAsync();
+            if (projects == null)
             {
                 return NotFound();
             }
-            return await _context.Projects.ToListAsync();
+            return Ok(projects);
         }
 
         // GET: api/ProjectsAPI/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Project>> GetProject(int id)
         {
-            if (_context.Projects == null)
-            {
-                return NotFound();
-            }
-            var project = await _context.Projects.FindAsync(id);
-
+            var project = await _projectService.GetProjectByIdAsync(id);
             if (project == null)
             {
                 return NotFound();
             }
 
-            return project;
+            return Ok(project);
         }
 
         // PUT: api/ProjectsAPI/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProject(int id, Project project)
         {
-            if (id != project.Id)
+            var updated = await _projectService.UpdateProjectAsync(id, project);
+            if (!updated)
             {
-                return BadRequest();
-            }
-
-            _context.Entry(project).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ProjectExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
             return Ok();
         }
 
         // POST: api/ProjectsAPI
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Project>> PostProject(Project project)
         {
-            if (_context.Projects == null)
-            {
-                return Problem("Entity set 'MyProjectManagerDBContext.Projects'  is null.");
-            }
-            if (project == null || project.Id != 0)
+            var createdProject = await _projectService.CreateProjectAsync(project);
+            if (createdProject == null)
             {
                 return BadRequest();
             }
 
-            if (String.IsNullOrEmpty(project.Name))
-            {
-                return BadRequest("Project name is required.");
-            }
-
-            _context.Projects.Add(project);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            return Ok(createdProject);
         }
 
         // DELETE: api/ProjectsAPI/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProject(int id)
         {
-            if (_context.Projects == null)
+            var deleted = await _projectService.DeleteProjectAsync(id);
+            if (!deleted)
             {
                 return NotFound();
             }
-            var project = await _context.Projects.FindAsync(id);
-            if (project == null)
-            {
-                return NotFound();
-            }
-
-            _context.Projects.Remove(project);
-            await _context.SaveChangesAsync();
 
             return Ok();
-        }
-
-        private bool ProjectExists(int id)
-        {
-            return (_context.Projects?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

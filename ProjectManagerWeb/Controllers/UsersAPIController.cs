@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProjectManagerWeb.Models;
+using ProjectManagerWeb.Services;
 
 namespace ProjectManagerWeb.Controllers
 {
@@ -13,118 +14,75 @@ namespace ProjectManagerWeb.Controllers
     [ApiController]
     public class UsersAPIController : ControllerBase
     {
-        private readonly MyProjectManagerDBContext _context;
+        private readonly IUserService _userService;
 
-        public UsersAPIController(MyProjectManagerDBContext context)
+        public UsersAPIController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
         // GET: api/UsersAPI
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUser()
         {
-            if (_context.User == null)
+            var users = await _userService.GetUsersAsync();
+            if (users == null)
             {
                 return NotFound();
             }
-            _context.Projects.Load();
-            return await _context.User.ToListAsync();
+            return Ok(users);
         }
 
         // GET: api/UsersAPI/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            if (_context.User == null)
-            {
-                return NotFound();
-            }
-            var user = await _context.User.FindAsync(id);
-
+            var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
                 return NotFound();
             }
 
-            return user;
+            return Ok(user);
         }
 
         // PUT: api/UsersAPI/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, User user)
         {
-            if (id != user.Id)
+            var updated = await _userService.UpdateUserAsync(id, user);
+            if (!updated)
             {
                 return BadRequest();
-            }
-
-            _context.Entry(user).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
             }
 
             return Ok();
         }
 
         // POST: api/UsersAPI
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            if (_context.User == null)
-            {
-                return Problem("Entity set 'MyProjectManagerDBContext.User'  is null.");
-            }
-
-            if(String.IsNullOrEmpty(user.Name))
+            var createdUser = await _userService.CreateUserAsync(user);
+            if (createdUser == null)
             {
                 return BadRequest("Name is required.");
             }
-           
-            _context.User.Add(user);
-            await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(createdUser);
         }
 
         // DELETE: api/UsersAPI/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            if (_context.User == null)
+            var deleted = await _userService.DeleteUserAsync(id);
+            if (!deleted)
             {
                 return NotFound();
             }
-            var user = await _context.User.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _context.User.Remove(user);
-            await _context.SaveChangesAsync();
 
             return Ok();
-        }
-
-        private bool UserExists(int id)
-        {
-            return (_context.User?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
